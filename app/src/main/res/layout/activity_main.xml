@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.evolver.robotmaskdemo.MainActivity">
+    android:weightSum="1">
+
+    <Button
+        android:id="@+id/open"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="open" />
+
+    <Button
+        android:id="@+id/close"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="close" />
+
+    <Button
+        android:id="@+id/HALF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HALF" />
+
+    <Button
+        android:id="@+id/SPEEDUP"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="speed++" />
+
+    <Button
+        android:id="@+id/SPEEDDOWN"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="speed--" />
+
+    <!-- Button
+        android:id="@+id/OFF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="OFF" / -->
+
+    <Button
+        android:id="@+id/RESET"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RESET" />
+</LinearLayout>
