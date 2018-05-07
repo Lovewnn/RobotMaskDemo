@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.RobotMaskManager;
+import android.os.IBinder;
 import android.os.ServiceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,6 +19,8 @@ import android.widget.Toast;
 import android.hardware.IRobotMaskService;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{//
@@ -35,6 +38,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private IntentFilter intentFilter;
     private MyBroadcastReceiver myBroadcastReceiver;
     private IRobotMaskService iRobotMaskService;
+
+    Object proxy = null;
+    Method getSwitch = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,8 +56,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         reset = (Button) findViewById(R.id.RESET);
 
 
-        iRobotMaskService = IRobotMaskService.Stub.asInterface(ServiceManager.getService("robot_mask"));
+       // iRobotMaskService = IRobotMaskService.Stub.asInterface(ServiceManager.getService("robot_mask"));
 
+
+
+        //use Reflection to access hardware service
+        try {
+            Method getService = Class.forName("android.os.ServiceManager").getMethod("getService", String.class);
+            IBinder ledService = (IBinder) getService.invoke(null, "robot_mask");
+            Method asInterface = Class.forName("android.hardware.IRobotMaskService$Stub").getMethod("asInterface", IBinder.class);
+            proxy = asInterface.invoke(null, ledService);
+            getSwitch = Class.forName("android.hardware.IRobotMaskService$Stub$Proxy").getMethod("getSwitch");
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            getSwitch.invoke(proxy);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        //use Reflection to access hardware service
 
         robotMaskManager = (RobotMaskManager) getSystemService("robot_mask");
         robotMaskManager.getSwitch();
