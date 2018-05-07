@@ -38,11 +38,16 @@
         android:layout_height="wrap_content"
         android:text="speed--" />
 
-    <!-- Button
+    <Button
+        android:id="@+id/ON"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="on" />
+    <Button
         android:id="@+id/OFF"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="OFF" / -->
+        android:text="off" />
 
     <Button
         android:id="@+id/RESET"

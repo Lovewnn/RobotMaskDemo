@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.RobotMaskManager;
+import android.os.ServiceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.hardware.IRobotMaskService;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -24,13 +26,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button half;
     Button speedUp;
     Button speedDown;
-    //Button off;
+    Button off;
+    Button on;
     Button reset;
     short position;
     short speed;
     RobotMaskManager robotMaskManager;
     private IntentFilter intentFilter;
     private MyBroadcastReceiver myBroadcastReceiver;
+    private IRobotMaskService iRobotMaskService;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,39 +45,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         half = (Button) findViewById(R.id.HALF);
         speedUp = (Button) findViewById(R.id.SPEEDUP);
         speedDown = (Button) findViewById(R.id.SPEEDDOWN);
-      //  off = (Button) findViewById(R.id.OFF);
+        off = (Button) findViewById(R.id.OFF);
+        on = (Button) findViewById(R.id.ON);
         reset = (Button) findViewById(R.id.RESET);
 
-        robotMaskManager = (RobotMaskManager) getSystemService(Context.ROBOT_MASK_SERVICE);
+
+        iRobotMaskService = IRobotMaskService.Stub.asInterface(ServiceManager.getService("robot_mask"));
+
+
+        robotMaskManager = (RobotMaskManager) getSystemService("robot_mask");
+        robotMaskManager.getSwitch();
         //robotMaskService.init(robotMaskManager);
         open.setOnClickListener(this);
         close.setOnClickListener(this);
         half.setOnClickListener(this);
         speedUp.setOnClickListener(this);
         speedDown.setOnClickListener(this);
-      //  off.setOnClickListener(this);
+        off.setOnClickListener(this);
+        on.setOnClickListener(this);
         reset.setOnClickListener(this);
         speed = 50;
 
         intentFilter = new IntentFilter();
-        intentFilter.addAction(Intent.ACTION_EVOLVER_MASK_STATUS_CHANGE);
-        intentFilter.addAction(Intent.ACTION_ROBOT_MASK_FAULT);
+        intentFilter.addAction("android.intent.action.MASK_CHANGED");
+        intentFilter.addAction("android.intent.action.MASK_FAULT");
         intentFilter.addAction("android.intent.action.MASK_KEY");
         myBroadcastReceiver = new MyBroadcastReceiver();
         registerReceiver(myBroadcastReceiver,intentFilter);
-        robotMaskManager.powerOn();
+       // robotMaskManager.powerOn();
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.open:
-                position = 90;
+                position = 0;
                 if(robotMaskManager.setPositionSpeed(position, speed) < 0)
                     Toast.makeText(this,  "open error", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.close:
-                position = 0;
+                position = 1;
                 if(robotMaskManager.setPositionSpeed(position, speed) < 0)
                     Toast.makeText(this,  "close error", Toast.LENGTH_SHORT).show();
                 //Toast.makeText(this,"state = " + robotMaskManager.getState(),Toast.LENGTH_SHORT).show();
@@ -103,14 +114,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.HALF:
                 position = 60;
                 if(robotMaskManager.setPositionSpeed(position, speed) < 0)
-                    Toast.makeText(this,  "error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,  "error half", Toast.LENGTH_SHORT).show();
+
              //   Toast.makeText(this,"machine = " + new String(robotMaskManager.getMachine()),Toast.LENGTH_SHORT).show();
                 break;
-//            case R.id.OFF:
-//                //position = 0;
-//               // speed = 0x0;
-//                robotMaskManager.powerOff();
-//                break;
+            case R.id.OFF:
+                //position = 0;
+               // speed = 0x0;
+                robotMaskManager.powerOff();
+                Toast.makeText(this,  "off", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.ON:
+                //position = 0;
+                // speed = 0x0;
+                robotMaskManager.powerOn();
+                Toast.makeText(this,  "on", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.RESET:
                 robotMaskManager.powerReset();
                 break;
@@ -132,20 +151,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(Intent.ACTION_EVOLVER_MASK_STATUS_CHANGE)) {
+            if (action.equals("android.intent.action.MASK_CHANGED")) {
                 boolean name = intent.getBooleanExtra("KEYCODE_MASK_OPEN", false);
-               // Log.e("glei", "onReceive +++++++ " + name);
+                Log.e("glei", "onReceive +++++++ " + name);
                 //Toast.makeText(context, name + "", Toast.LENGTH_SHORT).show();
-            } else if (action.equals(Intent.ACTION_ROBOT_MASK_FAULT)) {
+            } else if (action.equals("android.intent.action.MASK_FAULT")) {
+
+              //  short errot = intent.getShortExtra(Intent.ROBOT_MASK_ERROR,0);
+                //short advice = intent.getShortExtra(Intent.ROBOT_MASK_ADVICE,0);
+
 
             }
             else if (action.equals("android.intent.action.MASK_KEY")) {
                 //Toast.makeText(context, "mask key " + robotMaskManager.getSwitch() , Toast.LENGTH_SHORT).show();
                 switch (robotMaskManager.getSwitch()) {
                     case 1://open
-                        position = 0;
+                        position = 1;
                         robotMaskManager.setPositionSpeed(position,speed);
-                        Toast.makeText(context,  "open", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,  "close", Toast.LENGTH_SHORT).show();
+                        if(robotMaskManager.setState((short)0x0002) < 0)
+                            Toast.makeText(context,  "error open", Toast.LENGTH_SHORT).show();
                         break;
                     case 2://onprogress
                         //position = 0;
@@ -153,12 +178,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(context,  "onprogress", Toast.LENGTH_SHORT).show();
                         break;
                     case 3://close
-                        position = 90;
+                        position = 0;
                         robotMaskManager.setPositionSpeed(position,speed);
-                        Toast.makeText(context,  "close", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,  "open", Toast.LENGTH_SHORT).show();
+                        if(robotMaskManager.setState((short)0x0001) < 0)
+                            Toast.makeText(context,  "error close", Toast.LENGTH_SHORT).show();
                         break;
                     default:
-                        Toast.makeText(context,  "error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,  "error default ", Toast.LENGTH_SHORT).show();
                         break;
                 }
             }
